@@ -1,0 +1,38 @@
+name: Daily Healthcare Job Scraper
+
+on:
+  schedule:
+    - cron: "0 14 * * *"  # Runs daily at 14:00 UTC (~9 AM EST)
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas beautifulsoup4 requests
+
+      - name: Run job scraper
+        env:
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python healthcare_job_scraper.py
+
+      - name: Commit updated CSV
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add Healthcare_Data_AI_Jobs_USA.csv
+          git commit -m "Daily update of healthcare jobs CSV" || echo "No changes"
+          git push
